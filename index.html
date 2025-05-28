@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radhe AI Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+    #chatbox { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
+    .message { margin: 10px 0; padding: 10px; border-radius: 10px; max-width: 80%; }
+    .user { background-color: #BEE3F8; text-align: right; margin-left: auto; }
+    .bot { background-color: #E2E8F0; text-align: left; margin-right: auto; }
+    #input-area { margin-top: 10px; display: flex; }
+    #user-input { flex: 1; padding: 10px; font-size: 16px; }
+    #send-btn { padding: 10px 20px; background-color: #3182CE; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Radhe AI Chatbot</h1>
+  <div id="chatbox"></div>
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="तुमचा प्रश्न लिहा..." />
+    <button id="send-btn">पाठवा</button>
+  </div>
+
+  <script>
+    const chatbox = document.getElementById('chatbox');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    let messages = [{ role: "ai", content: "🙏 नमस्कार! मी Radhe AI आहे. काहीही विचारा." }];
+
+    function appendMessage(text, sender) {
+      const div = document.createElement('div');
+      div.classList.add('message', sender);
+      div.textContent = text;
+      chatbox.appendChild(div);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function renderMessages() {
+      chatbox.innerHTML = '';
+      messages.forEach(msg => {
+        appendMessage(msg.content, msg.role === 'user' ? 'user' : 'bot');
+      });
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      messages.push({ role: 'user', content: text });
+      renderMessages();
+      userInput.value = '';
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('http://your_backend_url/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: text }] })
+        });
+        const data = await response.json();
+        if (data.choices && data.choices[0].message) {
+          messages.push({ role: 'ai', content: data.choices[0].message.content });
+          renderMessages();
+        } else {
+          messages.push({ role: 'ai', content: 'माफ करा, काहीतरी चुकलं आहे.' });
+          renderMessages();
+        }
+      } catch (error) {
+        messages.push({ role: 'ai', content: 'सर्व्हरशी संपर्क साधता आला नाही.' });
+        renderMessages();
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    renderMessages();
+  </script>
+</body>
+</html>
